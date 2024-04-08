@@ -49,6 +49,11 @@
          (snd p)
          (find rst-l name))]))
 
+(define (sub-class? obj-name class-name classes) ; copied from class, may or may not be finished
+  (cond
+    [(equal? obj-name class-name) #t]
+    [(equal? obj-name 'Object) #f]))
+
 (module+ test
   (test (find (list (values 'a 1)) 'a)
         1)
