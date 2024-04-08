@@ -40,7 +40,7 @@
 
 ;; ----------------------------------------
 
-(define (find [l : (Listof (Symbol * 'a))] [name : Symbol]) : 'a
+(define (find [l : (Listof (Symbol * 'a))] [name : Symbol]) : 'a  ; make a subclass function similar to this to return subclass
   (type-case (Listof (Symbol * 'a)) l
     [empty
      (error 'find (string-append "not found: " (symbol->string name)))]
@@ -72,7 +72,9 @@
         [(thisE) this-val]
         [(argE) arg-val]
         [(newE class-name field-exprs)
-         (local [(define c (find classes class-name)) ; branch here, go to find if there is something to find, else default constructor
+         (local [(define c (if (symbol=? class-name 'Object) ; copied from class
+                               (classC 'Object empty empty)          ; goes to find if there is something to find, else default constructor
+                               (find classes class-name)))   ; 
                  (define vals (map recur field-exprs))]
            (if (= (length vals) (length (classC-field-names c)))
                (objV class-name vals)
@@ -98,10 +100,11 @@
         [(selectE numby objy)                             ; copied from above sendE/from class
          (local [(define num-val (recur numby))           ;
                  (define obj-val (recur objy))]           ;
-           (type-case Value obj                           ;
+           (type-case Value obj-val                           ;
              [(objV class-name field-vals)                ; if zero, sendE `zero, else `nonzero
-              (call-method class-name method-name classes ;
-                           obj arg-val)]                  ;
+              (if (= num-val 0)
+                  (interp (sendE `zero) classes this-val arg-val)      ; may be wrong way to call interp
+                  (interp (sendE `nonzero) classes this-val arg-val))] ;
              [else (error 'interp "not an object")]))]    ;
         [(ssendE obj-expr class-name method-name arg-expr)
          (local [(define obj (recur obj-expr))
